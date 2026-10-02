@@ -28,7 +28,8 @@
 					"dataset": {
 						"referenceName": "ds_azure_sql",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
