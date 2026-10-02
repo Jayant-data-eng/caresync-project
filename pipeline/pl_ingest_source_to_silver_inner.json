@@ -53,8 +53,6 @@
 				"name": "CopyDataToLanding",
 				"description": "",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "folderpath",
@@ -112,7 +110,7 @@
 						"parameters": {
 							"container_name": "landing",
 							"folder_name": {
-								"value": "@concat(\n    activity('ReadTableFromConfig').output.firstRow.source_system,\n    '/',\n    activity('ReadTableFromConfig').output.firstRow.source_table_name,\n    '/',\n    variables('TimeStamp')\n)",
+								"value": "@variables('folderPath')",
 								"type": "Expression"
 							}
 						}
