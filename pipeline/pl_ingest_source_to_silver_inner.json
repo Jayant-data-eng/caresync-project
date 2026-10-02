@@ -6,6 +6,8 @@
 				"name": "ReadTableFromConfig",
 				"description": "Reading table data based on table_id from main pipeline",
 				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -30,11 +32,34 @@
 						"type": "DatasetReference"
 					}
 				}
+			},
+			{
+				"name": "DateAndTime",
+				"description": "getting current Timestamp to build the folder structure",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TimeStamp",
+					"value": {
+						"value": "@formatDateTime(utcNow(),'yyyy-MM-dd HH:mm:ss')",
+						"type": "Expression"
+					}
+				}
 			}
 		],
 		"parameters": {
 			"table_id": {
 				"type": "string"
+			}
+		},
+		"variables": {
+			"TimeStamp": {
+				"type": "String"
 			}
 		},
 		"annotations": []
