@@ -44,10 +44,84 @@
 				"typeProperties": {
 					"variableName": "TimeStamp",
 					"value": {
-						"value": "@formatDateTime(utcNow(),'yyyy-MM-dd HH:mm:ss')",
+						"value": "@formatDateTime(utcNow(),'yyyy-MM-dd_HH:mm:ss')",
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "CopyDataToLanding",
+				"description": "",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ReadTableFromConfig",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "DateAndTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "SELECT * from public.@{activity('ReadTableFromConfig').output.firstRow.source_table_name};",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_postgrstables",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_landing",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": "landing",
+							"folder_name": {
+								"value": "@concat(activity('ReadTableFromConfig').output.firstRow.source_schema_name,'/',activity('ReadTableFromConfig').output.firstRow.source_table_name,'/',\nvariables('TimeStamp')\n)",
+								"type": "Expression"
+							}
+						}
+					}
+				]
 			}
 		],
 		"parameters": {
