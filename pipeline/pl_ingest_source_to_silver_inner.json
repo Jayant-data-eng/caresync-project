@@ -142,7 +142,7 @@
 				"typeProperties": {
 					"variableName": "folderPath",
 					"value": {
-						"value": "@concat(\n    activity('ReadTableFromConfig').output.firstRow.source_system,\n    '/',\n    activity('ReadTableFromConfig').output.firstRow.source_table_name,\n    '/',\n    variables('TimeStamp')\n)",
+						"value": "@concat(\n    activity('ReadTableFromConfig').output.firstRow.source_system,\n    '/',\n    activity('ReadTableFromConfig').output.firstRow.source_table_name,\n    '/',\n    variables('TimeStamp'),\n    '/'\n)",
 						"type": "Expression"
 					}
 				}
