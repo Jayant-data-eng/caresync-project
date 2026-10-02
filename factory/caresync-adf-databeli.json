@@ -1,0 +1,15 @@
+{
+	"name": "caresync-adf-databeli",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "e78f28ef-ce11-4e37-bb6e-c16911814332",
+		"tenantId": "b37cd12a-ca2b-43f6-908e-27a403e2a36d"
+	}
+}
