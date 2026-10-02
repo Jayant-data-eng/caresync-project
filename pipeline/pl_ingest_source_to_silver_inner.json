@@ -116,7 +116,7 @@
 						"parameters": {
 							"container_name": "landing",
 							"folder_name": {
-								"value": "@concat(activity('ReadTableFromConfig').output.firstRow.source_schema_name,'/',activity('ReadTableFromConfig').output.firstRow.source_table_name,'/',\nvariables('TimeStamp')\n)",
+								"value": "@concat(\n    activity('ReadTableFromConfig').output.firstRow.source_schema_name,\n'/',\nactivity('ReadTableFromConfig').output.firstRow.source_table_name,'/',\nvariables('TimeStamp')\n)",
 								"type": "Expression"
 							}
 						}
