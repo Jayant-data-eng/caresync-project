@@ -6,8 +6,6 @@
 				"name": "ReadTableFromConfig",
 				"description": "Reading table data based on table_id from main pipeline",
 				"type": "Lookup",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
