@@ -57,13 +57,7 @@
 				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "ReadTableFromConfig",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "DateAndTime",
+						"activity": "folderpath",
 						"dependencyConditions": [
 							"Succeeded"
 						]
