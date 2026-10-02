@@ -31,12 +31,56 @@
 					},
 					"firstRowOnly": false
 				}
+			},
+			{
+				"name": "ForEachTableId",
+				"description": "Run loop for each table id in control table",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupForConfigTableId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupForConfigTableId').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "SetTableIdForRun",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "tableId",
+								"value": {
+									"value": "@item().table_id",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
 			"source_system": {
 				"type": "string",
 				"defaultValue": "neon_postgres"
+			}
+		},
+		"variables": {
+			"tableId": {
+				"type": "Integer"
 			}
 		},
 		"annotations": []
