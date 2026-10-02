@@ -53,6 +53,8 @@
 				"name": "CopyDataToLanding",
 				"description": "",
 				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "ReadTableFromConfig",
@@ -122,6 +124,36 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "folderpath",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ReadTableFromConfig",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "DateAndTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "folderPath",
+					"value": {
+						"value": "@concat(\n    activity('ReadTableFromConfig').output.firstRow.source_system,\n    '/',\n    activity('ReadTableFromConfig').output.firstRow.source_table_name,\n    '/',\n    variables('TimeStamp')\n)",
+						"type": "Expression"
+					}
+				}
 			}
 		],
 		"parameters": {
@@ -131,6 +163,9 @@
 		},
 		"variables": {
 			"TimeStamp": {
+				"type": "String"
+			},
+			"folderPath": {
 				"type": "String"
 			}
 		},
