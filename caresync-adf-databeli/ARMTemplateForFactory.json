@@ -97,7 +97,7 @@
 						"typeProperties": {
 							"variableName": "TimeStamp",
 							"value": {
-								"value": "@formatDateTime(utcNow(),'yyyy-MM-dd_hh-mm-ss')",
+								"value": "@formatDateTime(utcNow(),'yyyy-MM-dd_hh:mm:ss')",
 								"type": "Expression"
 							}
 						}
@@ -200,6 +200,84 @@
 								"type": "Expression"
 							}
 						}
+					},
+					{
+						"name": "landing-to-bronze",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "CopyDataToLanding",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/jayantdevmore@gmail.com/caresync-adb/landing-to-bronze-nb",
+							"baseParameters": {
+								"landing_timestamp": {
+									"value": "@variables('TimeStamp')",
+									"type": "Expression"
+								},
+								"source_system": {
+									"value": "@activity('ReadTableFromConfig').output.firstRow.source_system",
+									"type": "Expression"
+								},
+								"table_name": {
+									"value": "@activity('ReadTableFromConfig').output.firstRow.source_table_name",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_adb_caresync",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "bronze-to-silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "landing-to-bronze",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/jayantdevmore@gmail.com/caresync-adb/bronze-to-silver",
+							"baseParameters": {
+								"landing_timestamp": {
+									"value": "@variables('TimeStamp')",
+									"type": "Expression"
+								},
+								"table_name": {
+									"value": "@activity('ReadTableFromConfig').output.firstRow.silver_table_name",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_adb_caresync",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -223,7 +301,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
 				"[concat(variables('factoryId'), '/datasets/ds_postgrstables')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_landing')]"
+				"[concat(variables('factoryId'), '/datasets/ds_adls_landing')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_adb_caresync')]"
 			]
 		},
 		{
