@@ -260,6 +260,79 @@
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
 				}
+			},
+			{
+				"name": "checkLoadType",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "folderpath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('ReadTableFromConfig').output.firstRow.load_type,'FULL'))",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "getWaterMarkValue",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "select watermark_value\nfrom ctrl.watermark\nwhere table_id =@{pipeline().parameters.table_id}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_azure_sql",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "watermark_value",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "getWaterMarkValue",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "watermark_value",
+								"value": {
+									"value": "@activity('getWaterMarkValue').output.firstRow.watermark_value",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
@@ -275,6 +348,9 @@
 				"type": "String"
 			},
 			"folderPath": {
+				"type": "String"
+			},
+			"watermark_value": {
 				"type": "String"
 			}
 		},
