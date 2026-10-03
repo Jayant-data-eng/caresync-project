@@ -7,6 +7,22 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "caresync-adf-databeli"
 		},
+		"ls_adls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://storageadlscaresync.dfs.core.windows.net/"
+		},
+		"ls_azure_sql_db_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "caresync-sql-db-server.database.windows.net"
+		},
+		"ls_azure_sql_db_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "caresync-sql-db"
+		},
+		"ls_azure_sql_db_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "jayant"
+		},
 		"ls_keyVault_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://caresync-databeli-valut.vault.azure.net/"
@@ -23,21 +39,9 @@
 			"type": "string",
 			"defaultValue": "neondb_owner"
 		},
-		"ls_azure_sql_db_properties_typeProperties_server": {
+		"ls_adb_caresync_properties_typeProperties_existingClusterId": {
 			"type": "string",
-			"defaultValue": "caresync-sql-db-server.database.windows.net"
-		},
-		"ls_azure_sql_db_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "caresync-sql-db"
-		},
-		"ls_azure_sql_db_properties_typeProperties_userName": {
-			"type": "string",
-			"defaultValue": "jayant"
-		},
-		"ls_adls_properties_typeProperties_url": {
-			"type": "string",
-			"defaultValue": "https://storageadlscaresync.dfs.core.windows.net/"
+			"defaultValue": "1002-185637-truqr53v"
 		},
 		"containerUri": {
 			"type": "string",
@@ -66,11 +70,20 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"ls_adls_properties_typeProperties_url": {
+						"value": "[parameters('ls_adls_properties_typeProperties_url')]"
+					},
 					"ls_keyVault_properties_typeProperties_baseUrl": {
 						"value": "[parameters('ls_keyVault_properties_typeProperties_baseUrl')]"
 					},
-					"ls_adls_properties_typeProperties_url": {
-						"value": "[parameters('ls_adls_properties_typeProperties_url')]"
+					"ls_azure_sql_db_properties_typeProperties_server": {
+						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_server')]"
+					},
+					"ls_azure_sql_db_properties_typeProperties_database": {
+						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_database')]"
+					},
+					"ls_azure_sql_db_properties_typeProperties_userName": {
+						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_userName')]"
 					},
 					"ls_postgresql_source_properties_typeProperties_server": {
 						"value": "[parameters('ls_postgresql_source_properties_typeProperties_server')]"
@@ -81,14 +94,8 @@
 					"ls_postgresql_source_properties_typeProperties_username": {
 						"value": "[parameters('ls_postgresql_source_properties_typeProperties_username')]"
 					},
-					"ls_azure_sql_db_properties_typeProperties_server": {
-						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_server')]"
-					},
-					"ls_azure_sql_db_properties_typeProperties_database": {
-						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_database')]"
-					},
-					"ls_azure_sql_db_properties_typeProperties_userName": {
-						"value": "[parameters('ls_azure_sql_db_properties_typeProperties_userName')]"
+					"ls_adb_caresync_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('ls_adb_caresync_properties_typeProperties_existingClusterId')]"
 					}
 				}
 			},
