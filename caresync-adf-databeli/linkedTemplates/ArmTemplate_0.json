@@ -460,6 +460,42 @@
 							"referenceName": "ls_adb_caresync",
 							"type": "LinkedServiceReference"
 						}
+					},
+					{
+						"name": "UpdateAuditTableSuccess",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "bronze-to-silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_db",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": {
+										"value": "@update ctrl.audit_log\nset status = 'SUCCESS' , end_time = SYSUTCDATETIME() , records_written = @{activity('bronze-to-silver').output.runOutput}\nwhere adf_run_id = '@{pipeline().parameters.adf_run_id}' and table_id = @{pipeline().parameters.table_id}",
+										"type": "Expression"
+									}
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
 					}
 				],
 				"policy": {
@@ -468,6 +504,9 @@
 				"parameters": {
 					"table_id": {
 						"type": "int"
+					},
+					"adf_run_id": {
+						"type": "string"
 					}
 				},
 				"variables": {
@@ -484,7 +523,8 @@
 				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
 				"[concat(variables('factoryId'), '/datasets/ds_postgrstables')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_landing')]",
-				"[concat(variables('factoryId'), '/linkedServices/ls_adb_caresync')]"
+				"[concat(variables('factoryId'), '/linkedServices/ls_adb_caresync')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_db')]"
 			]
 		},
 		{
@@ -544,20 +584,101 @@
 							},
 							"activities": [
 								{
-									"name": "SetTableIdForRun",
-									"type": "SetVariable",
-									"dependsOn": [],
+									"name": "ExecutePipelineInner",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "InsertIntoAuditTable",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
 									"policy": {
-										"secureOutput": false,
 										"secureInput": false
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"variableName": "tableId",
-										"value": {
-											"value": "@item().table_id",
-											"type": "Expression"
+										"pipeline": {
+											"referenceName": "pl_ingest_source_to_silver_inner",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"table_id": {
+												"value": "@item().table_id",
+												"type": "Expression"
+											},
+											"adf_run_id": {
+												"value": "@pipeline().parameters.adf_run_id",
+												"type": "Expression"
+											}
 										}
+									}
+								},
+								{
+									"name": "InsertIntoAuditTable",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "ls_azure_sql_db",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "insert into ctrl.audit_log (adf_run_id,table_id,stage,status,start_time) \nVALUES\n('@{pipeline().parameters.adf_run_id}',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME());",
+													"type": "Expression"
+												}
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "UpdateAuditTableForFailure",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "ExecutePipelineInner",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "ls_azure_sql_db",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "\nupdate ctrl.audit_log\nset status = 'FAILED' , end_time = SYSUTCDATETIME()\nwhere adf_run_id = '@{pipeline().parameters.adf_run_id}' and table_id = @{item().table_id}",
+													"type": "Expression"
+												}
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
 									}
 								}
 							]
@@ -571,6 +692,9 @@
 					"source_system": {
 						"type": "string",
 						"defaultValue": "neon_postgres"
+					},
+					"adf_run_id": {
+						"type": "string"
 					}
 				},
 				"variables": {
@@ -581,7 +705,9 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]"
+				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_source_to_silver_inner')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_db')]"
 			]
 		}
 	]
