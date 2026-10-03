@@ -165,11 +165,6 @@
 				"defaultValue": "a1"
 			}
 		},
-		"variables": {
-			"tableId": {
-				"type": "Integer"
-			}
-		},
 		"annotations": []
 	}
 }
