@@ -36,8 +36,6 @@
 				"name": "ForEachTableId",
 				"description": "Run loop for each table id in control table",
 				"type": "ForEach",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "LookupForConfigTableId",
