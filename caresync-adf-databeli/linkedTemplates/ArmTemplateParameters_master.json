@@ -5,6 +5,9 @@
 		"factoryName": {
 			"value": "caresync-adf-databeli"
 		},
+		"ls_adb_caresync_properties_typeProperties_existingClusterId": {
+			"value": "1002-185637-truqr53v"
+		},
 		"ls_adls_properties_typeProperties_url": {
 			"value": "https://storageadlscaresync.dfs.core.windows.net/"
 		},
@@ -28,9 +31,6 @@
 		},
 		"ls_postgresql_source_properties_typeProperties_username": {
 			"value": "neondb_owner"
-		},
-		"ls_adb_caresync_properties_typeProperties_existingClusterId": {
-			"value": "1002-185637-truqr53v"
 		},
 		"containerUri": {
 			"value": ""

@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "caresync-adf-databeli"
 		},
+		"ls_adb_caresync_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "1002-185637-truqr53v"
+		},
 		"ls_adls_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://storageadlscaresync.dfs.core.windows.net/"
@@ -38,10 +42,6 @@
 		"ls_postgresql_source_properties_typeProperties_username": {
 			"type": "string",
 			"defaultValue": "neondb_owner"
-		},
-		"ls_adb_caresync_properties_typeProperties_existingClusterId": {
-			"type": "string",
-			"defaultValue": "1002-185637-truqr53v"
 		}
 	},
 	"variables": {
@@ -108,7 +108,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "folderpath",
+								"activity": "checkLoadType",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -126,7 +126,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SELECT * from public.@{activity('ReadTableFromConfig').output.firstRow.source_table_name};",
+									"value": "@concat(\n    'SELECT * FROM public.',\n    activity('ReadTableFromConfig').output.firstRow.source_table_name,\n    if(\n        equals(\n            activity('ReadTableFromConfig').output.firstRow.load_type,\n            'FULL'\n        ),\n        '',\n        concat(\n            ' WHERE ',\n            activity('ReadTableFromConfig').output.firstRow.watermark_column,\n            ' > ''',\n            variables('watermark_value'),\n            ''''\n        )\n    )\n)",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00"
@@ -271,6 +271,14 @@
 								"table_name": {
 									"value": "@activity('ReadTableFromConfig').output.firstRow.silver_table_name",
 									"type": "Expression"
+								},
+								"load_type": {
+									"value": "@coalesce(activity('ReadTableFromConfig').output.firstRow.load_type,'')",
+									"type": "Expression"
+								},
+								"merge_keys": {
+									"value": "@activity('ReadTableFromConfig').output.firstRow.merge_keys",
+									"type": "Expression"
 								}
 							}
 						},
@@ -284,7 +292,7 @@
 						"type": "Script",
 						"dependsOn": [
 							{
-								"activity": "bronze-to-silver",
+								"activity": "check load type and update the watermark value",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -307,12 +315,136 @@
 								{
 									"type": "Query",
 									"text": {
-										"value": "@update ctrl.audit_log\nset status = 'SUCCESS' , end_time = SYSUTCDATETIME() , records_written = @{activity('bronze-to-silver').output.runOutput}\nwhere adf_run_id = '@{pipeline().parameters.adf_run_id}' and table_id = @{pipeline().parameters.table_id}",
+										"value": "update ctrl.audit_log\nset status = 'SUCCESS' , end_time = SYSUTCDATETIME() , records_written = @{activity('bronze-to-silver').output.runOutput}\nwhere adf_run_id = '@{pipeline().parameters.adf_run_id}' and table_id = @{pipeline().parameters.table_id}",
 										"type": "Expression"
 									}
 								}
 							],
 							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "checkLoadType",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "folderpath",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(equals(activity('ReadTableFromConfig').output.firstRow.load_type,'FULL'))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "getWaterMarkValue",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "select watermark_value\nfrom ctrl.watermark\nwhere table_id =@{pipeline().parameters.table_id}",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "ds_azure_sql",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								},
+								{
+									"name": "watermark_value",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "getWaterMarkValue",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "watermark_value",
+										"value": {
+											"value": "@activity('getWaterMarkValue').output.firstRow.watermark_value",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "check load type and update the watermark value",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "bronze-to-silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(equals(activity('ReadTableFromConfig').output.firstRow.load_type,'FULL'))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "update the watermark value",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "ls_azure_sql_db",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "update ctrl.watermark\nset watermark_value = SYSUTCDATETIME()\nWHERE table_id = @{pipeline().parameters.table_id}",
+													"type": "Expression"
+												}
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
 						}
 					}
 				],
@@ -332,6 +464,9 @@
 						"type": "String"
 					},
 					"folderPath": {
+						"type": "String"
+					},
+					"watermark_value": {
 						"type": "String"
 					}
 				},
@@ -400,6 +535,7 @@
 								"value": "@activity('LookupForConfigTableId').output.value",
 								"type": "Expression"
 							},
+							"isSequential": false,
 							"activities": [
 								{
 									"name": "ExecutePipelineInner",
@@ -455,7 +591,7 @@
 											{
 												"type": "Query",
 												"text": {
-													"value": "insert into ctrl.audit_log (adf_run_id,table_id,stage,status,start_time) \nVALUES\n('@{pipeline().parameters.adf_run_id}',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME());",
+													"value": "insert into ctrl.audit_log (adf_run_id,table_id,stage,status,start_time) \nVALUES\n('@{pipeline().parameters.adf_run_id}',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME())",
 													"type": "Expression"
 												}
 											}
@@ -512,12 +648,8 @@
 						"defaultValue": "neon_postgres"
 					},
 					"adf_run_id": {
-						"type": "string"
-					}
-				},
-				"variables": {
-					"tableId": {
-						"type": "Integer"
+						"type": "string",
+						"defaultValue": "a1"
 					}
 				},
 				"annotations": []
@@ -605,6 +737,30 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ls_adb_caresync')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405619190170385.5.azuredatabricks.net",
+					"accessToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ls_keyVault",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "adb-adf-access-token"
+					},
+					"existingClusterId": "[parameters('ls_adb_caresync_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_keyVault')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ls_adls')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -680,30 +836,6 @@
 					},
 					"sslMode": 2,
 					"authenticationType": "Basic"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_keyVault')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_adb_caresync')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureDatabricks",
-				"typeProperties": {
-					"domain": "https://adb-7405619190170385.5.azuredatabricks.net",
-					"accessToken": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ls_keyVault",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "adb-adf-access-token"
-					},
-					"existingClusterId": "[parameters('ls_adb_caresync_properties_typeProperties_existingClusterId')]"
 				}
 			},
 			"dependsOn": [
