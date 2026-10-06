@@ -223,7 +223,7 @@
 							"type": "Expression"
 						},
 						"merge_keys": {
-							"value": "@activity('ReadTableFromConfig').output.firstRow.merge_keys",
+							"value": "@coalesce(activity('ReadTableFromConfig').output.firstRow.merge_keys,'')",
 							"type": "Expression"
 						}
 					}
