@@ -467,7 +467,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"folder": {
-													"value": "@'{variables('folderPath')}'",
+													"value": "@variables('folderPath')",
 													"type": "Expression"
 												},
 												"container": "landing"
