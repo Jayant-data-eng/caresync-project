@@ -445,7 +445,10 @@
 									"inputs": [
 										{
 											"referenceName": "ds_csv",
-											"type": "DatasetReference"
+											"type": "DatasetReference",
+											"parameters": {
+												"folder": "insurance_providers"
+											}
 										}
 									],
 									"outputs": [
