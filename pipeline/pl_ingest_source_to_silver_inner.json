@@ -452,7 +452,8 @@
 											"referenceName": "ds_csv",
 											"type": "DatasetReference",
 											"parameters": {
-												"folder": "insurance_providers"
+												"folder": "insurance_providers",
+												"container": "source"
 											}
 										}
 									],
