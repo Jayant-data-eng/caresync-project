@@ -456,7 +456,10 @@
 											"referenceName": "ds_csv",
 											"type": "DatasetReference",
 											"parameters": {
-												"folder": "insurance_providers",
+												"folder": {
+													"value": "@activity('ReadTableFromConfig').output.firstRow.source_path",
+													"type": "Expression"
+												},
 												"container": "source"
 											}
 										}
