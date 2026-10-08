@@ -1,0 +1,51 @@
+{
+	"name": "Master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Source Postgres to landing",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_ingest_source_to_silver_main",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_system": "neon_postgres",
+						"adf_run_id": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Source ADLS to landing",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_ingest_source_to_silver_main",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_system": "adls_csv",
+						"adf_run_id": "@pipeline().RunId"
+					}
+				}
+			}
+		],
+		"annotations": []
+	}
+}
