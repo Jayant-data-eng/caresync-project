@@ -148,6 +148,23 @@
 								],
 								"scriptBlockExecutionTimeout": "02:00:00"
 							}
+						},
+						{
+							"name": "Update failed status",
+							"type": "Fail",
+							"dependsOn": [
+								{
+									"activity": "ExecutePipelineInner",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Pipeline failed",
+								"errorCode": "500"
+							}
 						}
 					]
 				}
